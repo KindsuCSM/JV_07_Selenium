@@ -2,6 +2,12 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.Select;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,9 +21,12 @@ public class SeleniumUno {
         WebDriver driver = new ChromeDriver();
         List<Soltero> lstSolteros;
         List<Soltero> lstFiltradaOrdenada = new ArrayList<>();
+        Soltero solteroSeleccionado;
+        String solteroSeleccionadoString = "";
 
         try{
             lstSolteros = obtenerListaDeWeb(driver);
+            hacerCaptura("Entrar_pag_AmazonDating");
             Thread.sleep(5000);
 
             if (!lstSolteros.isEmpty()) {
@@ -28,6 +37,11 @@ public class SeleniumUno {
                 lstFiltradaOrdenada = filtrarLista(edadMin, edadMax, precioMax, lstSolteros);
             }
 
+            solteroSeleccionadoString = obtenerUrlSoltero(getPrimero(lstFiltradaOrdenada), driver);
+
+            hacerPedido(solteroSeleccionadoString, driver);
+            hacerCaptura("Entrar_URL_Soltero");
+            Thread.sleep(5000);
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -54,6 +68,23 @@ public class SeleniumUno {
         return lstSolterosFiltro;
     }
 
+    private static void hacerPedido(String urlSoltero, WebDriver driver) {
+        driver.get(urlSoltero);
+
+        WebElement dropSoltero = driver.findElement(By.id("select-demeanor"));
+        Select sel = new Select(dropSoltero);
+        sel.selectByValue("7’7”");
+        hacerCaptura("Seleccionar_altura");
+
+        WebElement btnClick = driver.findElement(By.className("interest-button selected"));
+        btnClick.click();
+
+        hacerCaptura("Seleccionar_interest");
+
+        // WebElement comprarSoltero
+
+
+    }
 
     private static List<Soltero> obtenerListaDeWeb(WebDriver driver) {
         // Variables para crear el nuevo objeto Soltero
@@ -73,9 +104,9 @@ public class SeleniumUno {
 
         driver.get(URL);
 
-        List<WebElement> nombresEdad = driver.findElements(By.className("product-name"));
-        List<WebElement> productos = driver.findElements(By.className("product-price"));
-        List<WebElement> puntuaciones = driver.findElements(By.className("stars"));
+        List<WebElement> nombresEdad = recuperarListByName("product-name", driver);
+        List<WebElement> productos = recuperarListByName("product-price", driver);
+        List<WebElement> puntuaciones = recuperarListByName("stars", driver);
 
 
         for (int i = 0; i < nombresEdad.size(); i++) {
@@ -97,10 +128,41 @@ public class SeleniumUno {
 
             lstSolteros.add(new Soltero(nombre, precioConvertido, edad, puntuacionDouble));
         }
-
-
-
         return lstSolteros;
+    }
+
+    private static List<WebElement> recuperarListByName(String nombreClase, WebDriver driver) {
+        return driver.findElements(By.className(nombreClase));
+    }
+
+    private static Soltero getPrimero(List<Soltero> lstSolteros) {
+        return lstSolteros.get(0);
+    }
+
+    public static void hacerCaptura(String fileName) {
+        try{
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            Rectangle screenRectangle = new Rectangle(screenSize);
+            Robot robot = new Robot();
+            BufferedImage image = robot.createScreenCapture(screenRectangle);
+            ImageIO.write(image, "png", new File(fileName));
+        }catch(Exception e){
+            System.out.println("Error captura: " + e.getMessage());
+        }
+    }
+
+    public static String obtenerUrlSoltero(Soltero soltero, WebDriver driver) {
+        List<WebElement> lstClaseUrl = recuperarListByName("product-tile", driver);
+        String solteroSeleccionadoUrl = "";
+
+        for (int i = 0; i < lstClaseUrl.size(); i++) {
+            WebElement linkElement = lstClaseUrl.get(i).findElement(By.tagName("a"));
+            String urlSoltero = linkElement.getAttribute("href");
+            if(urlSoltero.contains(soltero.getNombre().toLowerCase())){
+                solteroSeleccionadoUrl = urlSoltero;
+            }
+        }
+        return solteroSeleccionadoUrl;
     }
 
     private static Double convertirPuntuacion(String puntuacion) {
