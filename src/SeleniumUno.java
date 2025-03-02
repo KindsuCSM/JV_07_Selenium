@@ -14,35 +14,36 @@ import java.util.List;
 import java.util.Scanner;
 
 public class SeleniumUno {
-    private static final String URL = "https://amazondating.co/";
+    private static final String URL = "https://amazondating.co/"; // url de la página
 
     public static void main(String[] args) {
+        // Le decimos la ubicacíón del driver
         System.setProperty("webdriver.chrome.driver", "C:\\Desarrollo\\Librerias\\Selenium-driver\\chromedriver-win64\\chromedriver.exe");
-        WebDriver driver = new ChromeDriver();
-        List<Soltero> lstSolteros;
-        List<Soltero> lstFiltradaOrdenada = new ArrayList<>();
-        Soltero solteroSeleccionado;
-        String solteroSeleccionadoString = "";
+        WebDriver driver = new ChromeDriver();  // Inicializacion del driver
+        List<Soltero> lstSolteros;              // Lista para los solteros de la página
+        List<Soltero> lstFiltradaOrdenada = new ArrayList<>(); // Lista filtrada y ordenada
+        String solteroSeleccionadoString = ""; // url del soltero seleccionado
 
         try{
-            lstSolteros = obtenerListaDeWeb(driver);
-            hacerCaptura("Paso_1_EntrarPag");
-            Thread.sleep(5000);
+            lstSolteros = obtenerListaDeWeb(driver);  // Obtenemos la lista de solteros
+            hacerCaptura("Paso_1_EntrarPag");// Hacemos una captura tras entrar en la pagina
+            Thread.sleep(5000);                 // Espera de 5s
 
             if (!lstSolteros.isEmpty()) {
+                // Preguntar por edad minima, máxima y precio máximo
                 int edadMin = 60; //preguntarMinEdad();
                 int edadMax = 80; //preguntarMaxEdad();
                 double precioMax = 1200; //preguntarPrecioMax();
 
+                // Filtrar la lista para que nos de los solteros que entren dentro de los parámetros establecidos
                 lstFiltradaOrdenada = filtrarLista(edadMin, edadMax, precioMax, lstSolteros);
             }
 
+            // Obtenemos la url del primer soltero de la lista
             solteroSeleccionadoString = obtenerUrlSoltero(getPrimero(lstFiltradaOrdenada), driver);
 
+            // Función para hacer el pedido del soltero
             hacerPedido(solteroSeleccionadoString, driver);
-
-
-
         } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally {
@@ -50,6 +51,7 @@ public class SeleniumUno {
         }
     }
 
+    // Filtramos la lista y nos quedamos con los solteros que entren dentro de esos parámetros
     private static List<Soltero> filtrarLista(int edadMin, int edadMax, double precioMax, List<Soltero> lstSolteros) {
         List<Soltero> lstSolterosFiltro = new ArrayList<>();
         for (Soltero soltero : lstSolteros) {
@@ -60,41 +62,43 @@ public class SeleniumUno {
             }
         }
 
+        // Ordenamos la lista dependiendo de lo que le hayamos establecido en la clase, en este caso las estrellas
         Collections.sort(lstSolterosFiltro);
 
-        for (Soltero soltero : lstSolterosFiltro) {
-            System.out.println(soltero.toString());
-        }
+        // Imprimir la lista
+//        for (Soltero soltero : lstSolterosFiltro) {
+//            System.out.println(soltero.toString());
+//        }
         return lstSolterosFiltro;
     }
 
+    // Función para hacer el pedido mediante la url del soltero
     private static void hacerPedido(String urlSoltero, WebDriver driver) {
         try{
-            driver.get(urlSoltero);
+            driver.get(urlSoltero); // Entramos en la url del soltero
             Thread.sleep(2000);
             hacerCaptura("Paso_2_URL_Soltero_Seleccionado");
 
-
-            WebElement dropSoltero = driver.findElement(By.id("select-demeanor"));
-            Select sel = new Select(dropSoltero);
-
+            // Seleccionar la opción de la altura
+            WebElement dropAltura = driver.findElement(By.id("select-demeanor"));
+            Select sel = new Select(dropAltura);
             sel.selectByValue("7’7”");
             Thread.sleep(2000);
             hacerCaptura("Paso_3_Seleccionar_Altura");
 
-
+            // Seleccionar el lenguaje de amor del soltero
             List<WebElement> loveLanguage = driver.findElements(By.className("interest-button"));
             loveLanguage.get(3).click();
             Thread.sleep(2000);
             hacerCaptura("Paso_4_Seleccionar_LoveLanguage");
 
-
+            // Pulsar el btn de comprar ahora
             WebElement btnComprar = driver.findElement(By.className("buy-now"));
             btnComprar.click();
             Thread.sleep(2000);
             hacerCaptura("Paso_5_Seleccionar_Comprar");
 
-
+            // Pulsar el btn de finalizar la compra
             WebElement btnCompraFinal = driver.findElement(By.xpath("/html/body/div[2]/div/div/div/div/div[2]/button"));
             btnCompraFinal.click();
             Thread.sleep(2000);
@@ -104,10 +108,9 @@ public class SeleniumUno {
         } catch (Exception e) {
             System.out.println("Error compra: " + e.getMessage());
         }
-
-
     }
 
+    // Funcion para obtener la lista con los solteros
     private static List<Soltero> obtenerListaDeWeb(WebDriver driver) {
         // Variables para crear el nuevo objeto Soltero
         String nombre;
@@ -124,43 +127,47 @@ public class SeleniumUno {
         // Lista donde añadiremos los solteros
         List<Soltero> lstSolteros = new ArrayList<>();
 
-        driver.get(URL);
+        driver.get(URL); // Entramos en la pagina
 
+        // Lista de los elementos que necesitamos para crear los objetos "Soltero"
         List<WebElement> nombresEdad = recuperarListByName("product-name", driver);
         List<WebElement> productos = recuperarListByName("product-price", driver);
         List<WebElement> puntuaciones = recuperarListByName("stars", driver);
 
-
+        // Extraemos la información de cada soltero
         for (int i = 0; i < nombresEdad.size(); i++) {
-            puntuacionObtenida = puntuaciones.get(i).getDomAttribute("class");
-            nombreEdadArray = nombresEdad.get(i).getText().split(", ");
-            producto = productos.get(i).getText();
-            precio = producto.split(" ");
-            if (precio[0].contains("FREE")) {
-                precioFinal = precio[0].replace("FREE", "");
-            } else {
-                precioFinal = precio[0];
+            puntuacionObtenida = puntuaciones.get(i).getDomAttribute("class"); // Obtenemos las estrellas
+            nombreEdadArray = nombresEdad.get(i).getText().split(", "); // El nombre y edad lo separamos
+            producto = productos.get(i).getText();  // Obtenemos el precio del soltero
+            precio = producto.split(" "); // Separamos el precio por espacios
+            if (precio[0].contains("FREE")) { // Si contiene free el string
+                precioFinal = precio[0].replace("FREE", ""); // Quitamos el Free del string
+            } else { // Sino
+                precioFinal = precio[0]; // Se queda el string tal y como está
             }
 
-            nombre = nombreEdadArray[0];
-            edad = Integer.parseInt(nombreEdadArray[1]);
-            precioConvertido = convertirPrecio(precioFinal);
+            nombre = nombreEdadArray[0]; // El nombre es la primera posicion del array
+            edad = Integer.parseInt(nombreEdadArray[1]); // La edad es la segunda posición del array
+            precioConvertido = convertirPrecio(precioFinal); // El precio lo convertimos mediante una funcion
 
-            Double puntuacionDouble = convertirPuntuacion(puntuacionObtenida);
+            Double puntuacionDouble = convertirPuntuacion(puntuacionObtenida); // Convertimos la puntuacion obtenida
 
-            lstSolteros.add(new Soltero(nombre, precioConvertido, edad, puntuacionDouble));
+            lstSolteros.add(new Soltero(nombre, precioConvertido, edad, puntuacionDouble)); // Añadimos un soltero nuevo a la lista
         }
         return lstSolteros;
     }
 
+    // Función para recuperar una lista de webelements a partir de una class
     private static List<WebElement> recuperarListByName(String nombreClase, WebDriver driver) {
         return driver.findElements(By.className(nombreClase));
     }
 
+    // Obtener la primera posicion de la lista
     private static Soltero getPrimero(List<Soltero> lstSolteros) {
         return lstSolteros.get(0);
     }
 
+    // Funcion para hacer capturas
     public static void hacerCaptura(String fileName) {
         try{
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -173,6 +180,7 @@ public class SeleniumUno {
         }
     }
 
+    // Funcion para obtener la url del soltero que le pasemos por parámetro
     public static String obtenerUrlSoltero(Soltero soltero, WebDriver driver) {
         List<WebElement> lstClaseUrl = recuperarListByName("product-tile", driver);
         String solteroSeleccionadoUrl = "";
@@ -187,20 +195,22 @@ public class SeleniumUno {
         return solteroSeleccionadoUrl;
     }
 
+    // Funcion para convertir la puntuacion de string a double
     private static Double convertirPuntuacion(String puntuacion) {
         String[] puntuacionSplit = puntuacion.split("-");
         double puntuacionDouble = 0.0;
 
         for (int i = 0; i < puntuacionSplit.length; i++) {
-            if (puntuacionSplit.length == 3) {
+            if (puntuacionSplit.length == 3) { // Si al hacer el split el tamaño del array es de 3, lo convertimos de una forma (ya que será x.5)
                 puntuacionDouble = Double.parseDouble(puntuacionSplit[1] + "." + puntuacionSplit[2]);
-            } else if (puntuacionSplit.length == 2) {
+            } else if (puntuacionSplit.length == 2) { // Si el tamaño del array es de 2, lo convertiremos de otra forma (Será un numero entero)
                 puntuacionDouble = Double.parseDouble(puntuacionSplit[1]);
             }
         }
         return puntuacionDouble;
     }
 
+    // Función para convertir el precio a double, es decir, le quitaremos el simbolo del $
     private static Double convertirPrecio(String precio){
         try{
             return Double.parseDouble(precio.substring(1, precio.length() - 1));
@@ -209,6 +219,7 @@ public class SeleniumUno {
         }
     }
 
+    // Funciones para preguntar al usuario por la edad minima, maxima y precio máximo.
     private static Integer preguntarMaxEdad() {
         Scanner sc = new Scanner(System.in);
         System.out.print("Introduzca el máximo de edad: ");
