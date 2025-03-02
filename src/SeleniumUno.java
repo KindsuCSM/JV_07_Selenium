@@ -26,13 +26,13 @@ public class SeleniumUno {
 
         try{
             lstSolteros = obtenerListaDeWeb(driver);
-            hacerCaptura("Entrar_pag_AmazonDating");
+            hacerCaptura("Paso_1_EntrarPag");
             Thread.sleep(5000);
 
             if (!lstSolteros.isEmpty()) {
-                int edadMin = preguntarMinEdad();
-                int edadMax = preguntarMaxEdad();
-                double precioMax = preguntarPrecioMax();
+                int edadMin = 60; //preguntarMinEdad();
+                int edadMax = 80; //preguntarMaxEdad();
+                double precioMax = 1200; //preguntarPrecioMax();
 
                 lstFiltradaOrdenada = filtrarLista(edadMin, edadMax, precioMax, lstSolteros);
             }
@@ -40,8 +40,8 @@ public class SeleniumUno {
             solteroSeleccionadoString = obtenerUrlSoltero(getPrimero(lstFiltradaOrdenada), driver);
 
             hacerPedido(solteroSeleccionadoString, driver);
-            hacerCaptura("Entrar_URL_Soltero");
-            Thread.sleep(5000);
+
+
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -69,19 +69,41 @@ public class SeleniumUno {
     }
 
     private static void hacerPedido(String urlSoltero, WebDriver driver) {
-        driver.get(urlSoltero);
+        try{
+            driver.get(urlSoltero);
+            Thread.sleep(2000);
+            hacerCaptura("Paso_2_URL_Soltero_Seleccionado");
 
-        WebElement dropSoltero = driver.findElement(By.id("select-demeanor"));
-        Select sel = new Select(dropSoltero);
-        sel.selectByValue("7’7”");
-        hacerCaptura("Seleccionar_altura");
 
-        WebElement btnClick = driver.findElement(By.className("interest-button selected"));
-        btnClick.click();
+            WebElement dropSoltero = driver.findElement(By.id("select-demeanor"));
+            Select sel = new Select(dropSoltero);
 
-        hacerCaptura("Seleccionar_interest");
+            sel.selectByValue("7’7”");
+            Thread.sleep(2000);
+            hacerCaptura("Paso_3_Seleccionar_Altura");
 
-        // WebElement comprarSoltero
+
+            List<WebElement> loveLanguage = driver.findElements(By.className("interest-button"));
+            loveLanguage.get(3).click();
+            Thread.sleep(2000);
+            hacerCaptura("Paso_4_Seleccionar_LoveLanguage");
+
+
+            WebElement btnComprar = driver.findElement(By.className("buy-now"));
+            btnComprar.click();
+            Thread.sleep(2000);
+            hacerCaptura("Paso_5_Seleccionar_Comprar");
+
+
+            WebElement btnCompraFinal = driver.findElement(By.xpath("/html/body/div[2]/div/div/div/div/div[2]/button"));
+            btnCompraFinal.click();
+            Thread.sleep(2000);
+            hacerCaptura("Paso_6_Aceptar_Compra_Final");
+
+            Thread.sleep(5000);
+        } catch (Exception e) {
+            System.out.println("Error compra: " + e.getMessage());
+        }
 
 
     }
